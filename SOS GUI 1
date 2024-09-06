@@ -1,0 +1,198 @@
+from tkinter import *
+
+# Initialize the main window
+root = Tk()
+root.title("SOS Game")
+root.geometry("900x600")  # Increased window size to fit labels off the grid
+
+# Global variables
+current_player = "Blue"  # Blue goes first
+player_choice = {"Blue": "S", "Red": "S"}  # Default S for both players
+player_turn = "Blue"  # Blue starts
+player_colors = {"Blue": "blue", "Red": "red"}
+game_over = False  # Flag to indicate if the game has ended
+
+# Function to update the turn indicator
+def update_turn_indicator():
+    if player_turn == "Blue":
+        blue_turn_circle["text"] = "●"
+        red_turn_circle["text"] = "○"
+    else:
+        blue_turn_circle["text"] = "○"
+        red_turn_circle["text"] = "●"
+
+# Function to toggle between S and O
+def toggle_s_o(player, s_label, o_label):
+    if player_choice[player] == "S":
+        player_choice[player] = "O"
+        s_label["text"] = "○"
+        o_label["text"] = "●"
+    else:
+        player_choice[player] = "S"
+        s_label["text"] = "●"
+        o_label["text"] = "○"
+
+# Function to check if there is a winning SOS sequence
+def check_win():
+    global game_over
+    for r in range(8):
+        for c in range(8):
+            if c <= 5 and buttons[r][c]["text"] == "S" and buttons[r][c+1]["text"] == "O" and buttons[r][c+2]["text"] == "S":
+                game_over_message(f"{player_turn} Wins!")
+                game_over = True
+                return True
+            if r <= 5 and buttons[r][c]["text"] == "S" and buttons[r+1][c]["text"] == "O" and buttons[r+2][c]["text"] == "S":
+                game_over_message(f"{player_turn} Wins!")
+                game_over = True
+                return True
+            if r <= 5 and c <= 5 and buttons[r][c]["text"] == "S" and buttons[r+1][c+1]["text"] == "O" and buttons[r+2][c+2]["text"] == "S":
+                game_over_message(f"{player_turn} Wins!")
+                game_over = True
+                return True
+            if r <= 5 and c >= 2 and buttons[r][c]["text"] == "S" and buttons[r+1][c-1]["text"] == "O" and buttons[r+2][c-2]["text"] == "S":
+                game_over_message(f"{player_turn} Wins!")
+                game_over = True
+                return True
+    return False
+
+# Function to display a "Game Over" message
+def game_over_message(message):
+    game_over_label["text"] = message
+
+# Function to place the letter on the grid
+def place_letter(button):
+    global player_turn
+    if game_over or button["text"] != "":
+        return
+
+    button["text"] = player_choice[player_turn]
+    button["fg"] = player_colors[player_turn]
+
+    if check_win():
+        return
+
+    player_turn = "Red" if player_turn == "Blue" else "Blue"
+    update_turn_indicator()
+
+# Function to reset the board and game state
+def reset_game():
+    global player_turn, player_choice, game_over
+    player_turn = "Blue"
+    player_choice = {"Blue": "S", "Red": "S"}
+    game_over = False
+    game_over_label["text"] = ""
+    for row in buttons:
+        for btn in row:
+            btn["text"] = ""
+    update_turn_indicator()
+    blue_s_label["text"] = "●"
+    blue_o_label["text"] = "○"
+    red_s_label["text"] = "●"
+    red_o_label["text"] = "○"
+    blue_human_circle["text"] = "●"
+    blue_computer_circle["text"] = "○"
+    red_human_circle["text"] = "●"
+    red_computer_circle["text"] = "○"
+
+# Create an 8x8 grid of buttons
+buttons = []
+for row in range(1, 9):
+    button_row = []
+    for col in range(8):
+        btn = Button(root, text="", width=3, height=1, font=("Helvetica", 12))
+        btn.config(command=lambda b=btn: place_letter(b))
+        btn.grid(row=row, column=3 + col, padx=2, pady=2)  # Adjusted column to avoid overlap
+        button_row.append(btn)
+    buttons.append(button_row)
+
+# Turn indicator at the bottom
+turn_label = Label(root, text="Turn:", font=("Helvetica", 14))
+turn_label.grid(row=9, column=8, sticky="e", padx=10)
+
+blue_turn_circle = Label(root, text="●", font=("Helvetica", 14), fg="blue")
+blue_turn_circle.grid(row=9, column=9, sticky="w", padx=5)
+
+red_turn_circle = Label(root, text="○", font=("Helvetica", 14), fg="red")
+red_turn_circle.grid(row=9, column=10, sticky="w", padx=5)
+
+# Add "Game Over" message area in the bottom left
+game_over_label = Label(root, text="", font=("Helvetica", 14), fg="red")
+game_over_label.grid(row=9, column=0, padx=10)
+
+# Function to ensure only one of Human/Computer is filled
+def toggle_human_computer(player, human_label, computer_label):
+    if human_label["text"] == "●":
+        human_label["text"] = "○"
+        computer_label["text"] = "●"
+    else:
+        human_label["text"] = "●"
+        computer_label["text"] = "○"
+
+# Add labels and status circles for Blue Player (Left side)
+blue_player_label = Label(root, text="Blue Player", font=("Helvetica", 14))
+blue_player_label.grid(row=1, column=0, sticky="e", padx=10)
+
+blue_human_label = Label(root, text="Human")
+blue_human_label.grid(row=2, column=0, sticky="e", padx=10)
+blue_human_circle = Label(root, text="●", font=("Helvetica", 14))  # Default Human
+blue_human_circle.grid(row=2, column=1, sticky="w", padx=5)
+blue_human_circle.bind("<Button-1>", lambda event: toggle_human_computer("Blue", blue_human_circle, blue_computer_circle))
+
+blue_computer_label = Label(root, text="Computer")
+blue_computer_label.grid(row=3, column=0, sticky="e", padx=10)
+blue_computer_circle = Label(root, text="○", font=("Helvetica", 14))
+blue_computer_circle.grid(row=3, column=1, sticky="w", padx=5)
+blue_computer_circle.bind("<Button-1>", lambda event: toggle_human_computer("Blue", blue_human_circle, blue_computer_circle))
+
+# Add 'S' and 'O' labels next to the buttons
+blue_s_label = Label(root, text="S", font=("Helvetica", 14))  # Display 'S'
+blue_s_label.grid(row=4, column=0, sticky="e", padx=10)
+blue_s_circle = Label(root, text="●", font=("Helvetica", 14))  # Default S selected
+blue_s_circle.grid(row=4, column=1, sticky="w", padx=5)
+
+blue_o_label = Label(root, text="O", font=("Helvetica", 14))  # Display 'O'
+blue_o_label.grid(row=5, column=0, sticky="e", padx=10)
+blue_o_circle = Label(root, text="○", font=("Helvetica", 14))
+blue_o_circle.grid(row=5, column=1, sticky="w", padx=5)
+
+blue_s_circle.bind("<Button-1>", lambda event: toggle_s_o("Blue", blue_s_circle, blue_o_circle))
+blue_o_circle.bind("<Button-1>", lambda event: toggle_s_o("Blue", blue_s_circle, blue_o_circle))
+
+# Add labels and status circles for Red Player (Right side)
+red_player_label = Label(root, text="Red Player", font=("Helvetica", 14))
+red_player_label.grid(row=1, column=11, sticky="w", padx=10)  # Shifted to the right of the grid
+
+red_human_label = Label(root, text="Human")
+red_human_label.grid(row=2, column=11, sticky="w", padx=10)
+red_human_circle = Label(root, text="●", font=("Helvetica", 14))  # Default Human
+red_human_circle.grid(row=2, column=12, sticky="w", padx=5)
+red_human_circle.bind("<Button-1>", lambda event: toggle_human_computer("Red", red_human_circle, red_computer_circle))
+
+red_computer_label = Label(root, text="Computer")
+red_computer_label.grid(row=3, column=11, sticky="w", padx=10)
+red_computer_circle = Label(root, text="○", font=("Helvetica", 14))
+red_computer_circle.grid(row=3, column=12, sticky="w", padx=5)
+red_computer_circle.bind("<Button-1>", lambda event: toggle_human_computer("Red", red_human_circle, red_computer_circle))
+
+# Add 'S' and 'O' labels next to the buttons for Red Player
+red_s_label = Label(root, text="S", font=("Helvetica", 14))  # Display 'S'
+red_s_label.grid(row=4, column=11, sticky="e", padx=5)
+red_s_circle = Label(root, text="●", font=("Helvetica", 14))  # Default S selected
+red_s_circle.grid(row=4, column=12, sticky="w", padx=5)
+
+red_o_label = Label(root, text="O", font=("Helvetica", 14))  # Display 'O'
+red_o_label.grid(row=5, column=11, sticky="e", padx=5)
+red_o_circle = Label(root, text="○", font=("Helvetica", 14))
+red_o_circle.grid(row=5, column=12, sticky="w", padx=5)
+
+red_s_circle.bind("<Button-1>", lambda event: toggle_s_o("Red", red_s_circle, red_o_circle))
+red_o_circle.bind("<Button-1>", lambda event: toggle_s_o("Red", red_s_circle, red_o_circle))
+
+# Add a New Game button in the bottom right, now with reset functionality
+new_game_button = Button(root, text="New Game", font=("Helvetica", 14), width=10, command=reset_game)
+new_game_button.grid(row=9, column=11, columnspan=2, pady=20)
+
+# Initialize turn indicator
+update_turn_indicator()
+
+root.mainloop()
